@@ -8,6 +8,12 @@ function App() {
       .withAutomaticReconnect()
       .build();
 
+    /* я подписался на метод ReceiveMessage из IChatClient */
+    connection.on("ReceiveMessage", (userName: string, message: string) => {
+      console.log(userName);
+      console.log(message);
+    });
+
     try{
       await connection.start();
       await connection.invoke("JoinChat", { userName, chatRoom }); // с помощью invoke() я могу вызвать метод хаба, который указан на сервере
