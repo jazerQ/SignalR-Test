@@ -12,6 +12,8 @@ function App() {
   const [connection, setConnection] = useState<HubConnection | null>(null);
   const [chatRoom, setChatRoom] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  /* функция подключения к чату */
   const joinChat = async (userName: string, chatRoom: string) => {
     var connection = new HubConnectionBuilder()
       .withUrl("http://localhost:5018/chat")
@@ -36,9 +38,23 @@ function App() {
     }
   };
 
+  /* функция которая отправляет сообщения в чат, вызывает функцию из хаба */
+  const sendMessage = async (message: string) => {
+    if(connection !== null)
+      await connection.invoke("SendMessage", message);
+  };
+
+  /* функция закрытия чата */
+  const closeChat = async () => {
+    if(connection !== null)
+      await connection.stop();
+
+    setConnection(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      {connection ? <Chat closeChat={null} messages={messages} chatRoom={chatRoom} /> : <Form onSubmit={joinChat}/>}
+      {connection ? <Chat closeChat={closeChat} messages={messages} chatRoom={chatRoom} sendMessage={sendMessage} /> : <Form onSubmit={joinChat}/>}
     </div>
   );
 }
