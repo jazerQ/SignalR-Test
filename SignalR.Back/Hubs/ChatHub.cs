@@ -1,5 +1,7 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Distributed;
 using SignalR.Back.Models;
 
 namespace SignalR.Back.Hubs;
@@ -23,15 +25,31 @@ public interface IChatClient
 /// </summary>
 public class ChatHub : Hub<IChatClient>
 {
-    public override Task OnConnectedAsync()
+    private readonly IDistributedCache _cache;
+    
+    public ChatHub(IDistributedCache distributedCache)
     {
-        return base.OnConnectedAsync();
+        _cache = distributedCache;
     }
-
+    
     public async Task JoinChat(UserConnection connection)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, connection.ChatRoom);
 
+        var stringConnection = JsonSerializer.Serialize(connection);
+        
+        await _cache.SetStringAsync(Context.ConnectionId, stringConnection);
+        
         await Clients.Group(connection.ChatRoom).ReceiveMessage("Admin", $"{connection.UserName} присоединился к чату!");
+    }
+
+    public async Task SendMessage(string message)
+    {
+        var stringConnection = await _cache.GetAsync(Context.ConnectionId);
+        
+        var connection = JsonSerializer.Deserialize<UserConnection>(stringConnection);
+
+        if (connection is not null)
+            await Clients.Group(connection.ChatRoom).ReceiveMessage(connection.UserName, message);
     }
 }

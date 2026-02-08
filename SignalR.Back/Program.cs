@@ -2,6 +2,12 @@ using SignalR.Back.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/* Установим Redis */
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
 /* Установим CORS */
 builder.Services.AddCors(options =>
 {
